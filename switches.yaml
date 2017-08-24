@@ -1,5 +1,0 @@
-# switches
-- platform: wake_on_lan
-  mac_address: "00-11-32-39-2A-C0"
-  name: DiskStation WoL
-  host: 192.168.178.100
