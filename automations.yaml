@@ -1,0 +1,160 @@
+- alias: Send notification when sun rises
+  id: '1'
+  trigger:
+    platform: sun
+    event: sunrise
+    offset: +00:00:00
+  action:
+    service: notify.ios_iphone_von_paul
+    data:
+      message: Die Sonne geht auf.
+- alias: Send notification when sun sets
+  id: '2'
+  trigger:
+    platform: sun
+    event: sunset
+    offset: +00:00:00
+  action:
+    service: notify.ios_iphone_von_paul
+    data:
+      message: Die Sonne geht unter.
+- alias: Paul is home
+  id: '3'
+  trigger:
+    platform: state
+    entity_id: device_tracker.iphonevonpaul
+    from: not_home
+    to: home
+  action:
+    service: notify.ios_iphone_von_paul
+    data:
+      message: Paul ist daheim.
+- alias: Paul is not home
+  id: '4'
+  trigger:
+    platform: state
+    entity_id: device_tracker.iphonevonpaul
+    from: home
+    to: not_home
+  action:
+    service: notify.ios_iphone_von_paul
+    data:
+      message: "Paul hat das Geb\xE4ude verlassen."
+- alias: Switch Media Player off when nobody home
+  id: '5'
+  trigger:
+  - platform: state
+    entity_id: device_tracker.iphonevonpaul
+    to: not_home
+  action:
+  - service: media_player.turn_off
+    data:
+      entity_id: group.mediaplayer
+- alias: Phone call in
+  id: '6'
+  trigger:
+    platform: state
+    entity_id: sensor.phone
+    from: idle
+  condition:
+    condition: state
+    entity_id: group.mediaplayer
+    state: 'on'
+  action:
+  - service: media_player.volume_mute
+    data:
+      entity_id: media_player.fernseher
+      is_volume_muted: 'True'
+  - service: media_player.media_pause
+    entity_id:
+    - media_player.chromecast
+    - media_player.amazon_fire_tv
+    - media_player.googlehome
+  - service: tts.google_say
+    data:
+      entity_id: media_player.googlehome
+      message: "Pausiere f\xFCr Anruf"
+- alias: Phone call end
+  id: '7'
+  trigger:
+    platform: state
+    entity_id: sensor.phone
+    to: idle
+  condition:
+    condition: state
+    entity_id: group.mediaplayer
+    state: 'on'
+  action:
+  - service: media_player.volume_mute
+    data:
+      entity_id: media_player.fernseher
+      is_volume_muted: 'False'
+  - service: media_player.media_play
+    entity_id:
+    - media_player.chromecast
+    - media_player.amazon_fire_tv
+    - media_player.googlehome
+- alias: "Radio Lautst\xE4rke"
+  id: '8'
+  trigger:
+    platform: state
+    entity_id: input_slider.volume_radio
+  action:
+    service: media_player.volume_set
+    data_template:
+      entity_id: media_player.googlehome
+      volume_level: '{{  states.input_slider.volume_radio.state  }}'
+- alias: Radio aus wenn TV an
+  id: '9'
+  trigger:
+    platform: state
+    entity_id: media_player.fernseher
+    to: 'on'
+  action:
+    service: media_player.turn_off
+    data:
+      entity_id: media_player.googlehome
+- action:
+  - data:
+      data:
+        visible: 'False'
+      entity_id: group.basement
+    service: group.set_visibility
+  alias: Hide DiskStation Group
+  condition: []
+  id: '1503156769734'
+  trigger:
+  - entity_id: sensor.diskstation
+    from: Online
+    platform: state
+    to: Offline
+- action:
+  - data:
+      data:
+        visible: 'True'
+      entity_id: group.basement
+    service: group.set_visibility
+  alias: Show DiskStation Group
+  condition: []
+  id: '1503156875526'
+  trigger:
+  - entity_id: group.diskstation
+    from: Offline
+    platform: state
+    to: Online
+- action:
+  - data:
+      entity_id: media_player.googlehome
+    service: media_player.turn_off
+  - alias: ''
+    data:
+      message: TV on GoogleHome off
+    service: notify.ios_iphone_von_paul
+  alias: TV on GoogleHome off
+  condition: []
+  id: '1503239529011'
+  trigger:
+  - entity_id: media_player.fernseher
+    from: 'off'
+    platform: state
+    to: 'on'
